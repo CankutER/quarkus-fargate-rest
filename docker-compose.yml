@@ -1,0 +1,41 @@
+services:
+  db:
+    container_name: quarkus-postgres
+    build:
+      dockerfile: Postgres.Dockerfile
+    ports:
+      - 3001:5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: UsersDb
+      POSTGRES_USER: postgres
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: always
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: quarkus-minio
+    ports:
+      - 9000:9000
+      - 9090:9090
+    environment:
+      MINIO_ROOT_USER: ROOTNAME
+      MINIO_ROOT_PASSWORD: CHANGEME123
+    volumes:
+      - ~/minio/data:/data
+    command: server /data --console-address ":9090"
+
+  backend:
+    container_name: quarkus-backend-local
+    image: quarkus-backend-local:latest
+    ports:
+      - 8080:8080
+    environment:
+      db_url: jdbc:postgresql://db:5432/UsersDb
+      db_username: postgres
+      db_password: password
+    depends_on:
+      - db
+      - minio
+    restart: always
